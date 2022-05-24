@@ -1,9 +1,15 @@
 "use strict"
 let addToy = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", (e) => {
   //invoke my functions here inside the DOMContentLoaded
+  e.preventDefault()
   getToys()
+  createToySubmitListener()
+  // this shows that the element has the id I want
+  // let test = document.getElementById("create-toy")
+  // console.log(test)
+
   const addBtn = document.querySelector("#new-toy-btn");
   const toyFormContainer = document.querySelector(".container");
   addBtn.addEventListener("click", () => {
@@ -44,37 +50,32 @@ function createToyCard(toys){
   toyImg.width = "200"
   toyImg.height = "200"
   toyImg.src = toys.image
-  toyLikes.innerHTML = `Like: ${toys.likes}`
+  toyLikes.innerHTML = `${toys.likes}`
+  //console.log(toyLikes.innerHTML)
   //create the like button
+  toyLikes.id=`${toys.id}`
+  //console.log(card.id)
   likeBtn.id = "like-button"
   likeBtn.innerText = "Like"
+  likeBtn.addEventListener("click", e => likes(e,toys.id))
   //add the elements with the data to the page
   card.append(toyName, toyImg, toyLikes, likeBtn)
   document.getElementById("toy-collection").appendChild(card)
 }
 
-function createNewToy(){
-  const newCard = document.createElement("div").id="new-card"
-  const newName = document.createElement("h2").id="new-name"
-  const newImg = document.createElement("img").id="new-img"
-  const newLikes = document.createElement("p").id="new-likes"
-  const newBtn = document.createElement("button").id="new-btn"
-  newBtn.innerText = "Like"
-  newCard.append(newName, newImg, newLikes, newBtn)
-  document.getElementById("toy-collection").appendChild(newCard)
-  createToySubmitListener()
-}
-
+//this is the submit button listener that calls postNewToy to then post the new Toy
 function createToySubmitListener(){
-  document.getElementById("create-toy").addEventListener("submit", (e) =>{
+  //console.log("This is printing :)")
+  //console.log(document.getElementById("create-toy"))
+  document.getElementById("submit-form").addEventListener("submit", (e) =>{
     e.preventDefault();
-    const toyName = document.getElementById().value
-    const toyImg = document.getElementById().value
+    const toyName = document.getElementById("input-toy-name").value
+    const toyImg = document.getElementById("input-img-url").value
     const newLikes = 0;
     let newToy = {name:toyName, image:toyImg, likes:newLikes}
+    createToyCard(newToy)
     postNewToy(toyUrl, newToy)
   });
-
 }
 
 function postNewToy(toyUrl, data={}){
@@ -88,10 +89,14 @@ function postNewToy(toyUrl, data={}){
 }
 
 //create the like button functionality and use a patch
-function likes(e){
+function likes(e, id){
   e.preventDefault();
-  let more = parseInt(e.target.previousElementSibling.innerText) + 1
-  fetch(`http://localhost:3000/toys/${e.target.id}`, {
+  //console.log("this should show when I press a like button")
+  let likes = parseInt(document.getElementById(id).innerText) +1
+  let updateLikes = parseInt(document.getElementById(id).innerText) +1
+  document.getElementById(id).innerText = updateLikes
+  //console.log(likes)
+  fetch(toyUrl + `/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -99,11 +104,11 @@ function likes(e){
 
       },
       body: JSON.stringify({
-        "likes": more
+        "likes": likes
       })
     })
-    .then(res => res.json())
-    .then((response => {
-      e.target.previousElementSibling.innerText = `${more} likes`;
-    }))
+    .then(response => response.json()).then(data => {
+      createToyCard(data)
+    });
 }
+
